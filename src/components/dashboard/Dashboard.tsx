@@ -41,7 +41,8 @@ import { Key, RemoveRedEyeOutlined } from '@mui/icons-material';
 import { parseFormattedAmountToNumber } from '@/utils/formatters';
 import { getUserDashboard } from '@/features/dashboard/actions';
 import { showToast } from '../HotToast';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import Loading from '@/app/loading';
 
 interface AccountsProps {
   id: string,
@@ -60,6 +61,7 @@ const Dashboard = () => {
   
   const {currentTab} = useGeneralData();
   const router = useRouter();
+  const pathName = usePathname();
     
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken");
@@ -70,6 +72,14 @@ const Dashboard = () => {
     }
     
     const fetchUser = async () => {
+      if (!token) {
+        if (pathName === '/') {
+          router.push('/login');
+          return showToast('Not authorized!', 'error');
+        }
+        router.push('/login');
+      }
+
       if (token && token !== undefined) {
         try {
           const res = await getUserDashboard(token);
@@ -92,11 +102,15 @@ const Dashboard = () => {
     };
   
     fetchUser();
-  }, [router]);
+  }, [router, pathName]);
 
   const handleBalanceToggle = () => setIsBalanceOpen(prev => !prev);
     
   const handleTabToggle = (tab: string) => setActiveTab(tab);
+
+  setTimeout(() => {
+    return <Loading />;
+  },1200);
 
   return (
     <div className='w-full pt-2 pb-4 space-y-2 md:space-y-4'>
